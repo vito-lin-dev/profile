@@ -6,7 +6,7 @@
     <atom:link href="https://vito-lin-dev.github.io/profile/feed.xml" rel="self" type="application/rss+xml"/>
     <description>Vito Lin writes Rust close to the metal and CUDA close to the silicon, and sends the fixes upstream.</description>
     <language>en</language>
-    <lastBuildDate>Mon, 24 Aug 2026 21:45:40 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 25 Aug 2026 21:45:39 GMT</lastBuildDate>
     <item>
       <title>Pretraining and fine-tuning nanoGPT-124M from scratch</title>
       <link>https://vito-lin-dev.github.io/profile/writing/2026-08-pretraining_and_fine-tuning_nanoGPT-124m_from_scratch/</link>
