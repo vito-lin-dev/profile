@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T23:09:43.027Z",
+  "generated_at": "2026-09-20T23:16:04.186Z",
   "user": {
     "login": "vito-lin-dev",
     "name": "Vito Lin",
@@ -10,7 +10,7 @@
     "url": "https://github.com/vito-lin-dev"
   },
   "stats": {
-    "repos": 6,
+    "repos": 7,
     "stars": 14,
     "pulls": 10,
     "upstream_pulls": 10,
@@ -59,6 +59,18 @@
       "created_at": "2025-03-03T10:54:28Z"
     },
     {
+      "name": "EasySwitch",
+      "url": "https://github.com/vito-lin-dev/EasySwitch",
+      "homepage": null,
+      "description": "",
+      "language": null,
+      "topics": [],
+      "stars": 0,
+      "forks": 0,
+      "pushed_at": "2026-09-20T11:17:24Z",
+      "created_at": "2026-09-20T11:17:23Z"
+    },
+    {
       "name": "profile",
       "url": "https://github.com/vito-lin-dev/profile",
       "homepage": "https://vito-lin-dev.github.io/profile/",
@@ -67,7 +79,7 @@
       "topics": [],
       "stars": 0,
       "forks": 0,
-      "pushed_at": "2026-09-18T23:20:05Z",
+      "pushed_at": "2026-09-19T23:09:44Z",
       "created_at": "2026-08-10T14:20:09Z"
     },
     {
