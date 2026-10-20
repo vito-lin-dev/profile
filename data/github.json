@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T00:23:31.759Z",
+  "generated_at": "2026-10-20T23:55:23.791Z",
   "user": {
     "login": "vito-lin-dev",
     "name": "Vito Lin",
@@ -69,7 +69,7 @@
       "topics": [],
       "stars": 0,
       "forks": 0,
-      "pushed_at": "2026-10-18T23:16:39Z",
+      "pushed_at": "2026-10-20T00:23:33Z",
       "created_at": "2026-08-10T14:20:09Z"
     },
     {
@@ -117,13 +117,13 @@
       "url": "https://github.com/apache/spark/pull/59377",
       "number": 59377,
       "created_at": "2026-10-11T08:34:03Z",
-      "state": "open",
+      "state": "closed",
       "upstream": true
     },
     {
       "repo": "apache/spark",
       "owner": "apache",
-      "title": "[SPARK-60149][PYTHON][TESTS] Add tests for ErrorClassesReader lookup and breaking_change_info fallback",
+      "title": "[SPARK-60149][PYTHON][TESTS] Add tests for ErrorClassesReader lookup errors and breaking_change_info fallback",
       "url": "https://github.com/apache/spark/pull/59352",
       "number": 59352,
       "created_at": "2026-10-11T05:54:51Z",
