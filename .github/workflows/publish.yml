@@ -7,11 +7,14 @@ on:
     - cron: "17 21 * * *"   # 05:17 Taipei — refreshes the GitHub data
   workflow_dispatch:
 
+# Build output is deployed as a Pages artifact, never committed back to the repo.
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: publish
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -33,14 +36,21 @@ jobs:
       - name: Build site
         run: node scripts/build.mjs
 
-      - name: Commit generated files
+      - name: Collect publishable files into _site
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A index.html 404.html feed.xml sitemap.xml writing about data/github.json
-          if git diff --staged --quiet; then
-            echo "Nothing changed."
-          else
-            git commit -m "chore: rebuild site"
-            git push
-          fi
+          mkdir _site
+          cp -r index.html 404.html feed.xml sitemap.xml .nojekyll writing about assets _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
