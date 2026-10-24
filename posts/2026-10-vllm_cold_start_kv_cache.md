@@ -34,12 +34,11 @@ If the story ended here, it would be a small "confirmed it is fine" experiment. 
 
 A follow-up experiment needed a restart, and afterwards several numbers in the startup log had changed:
 
-```
-                       first boot              after restart
-torch.compile          15.99 s                 3.13 s (Directly load)
-KV cache               6.63 GiB / 124,224 tok  6.88 GiB / 128,880 tok
-process memory, idle   8,048 MiB               8,272 MiB
-```
+| | first boot | after restart |
+|---|---:|---:|
+| `torch.compile` | 15.99 s | 3.13 s (`Directly load`) |
+| KV cache | 6.63 GiB / 124,224 tok | 6.88 GiB / 128,880 tok |
+| process memory, idle | 8,048 MiB | 8,272 MiB |
 
 Faster compilation after a restart makes sense: the compiled artifacts were cached. But **the KV cache size should not move**. It is set by the budget, and the flags were identical.
 
@@ -57,13 +56,11 @@ That habit paid off for the rest of the investigation: **verify that your contro
 
 Before reporting anything upstream, the first question is always whether the latest release still does it. The same procedure on v0.32.0:
 
-```
-                        cold boot               warm boot
-torch.compile           25.40 s                 0.19 s (AOT load)
-KV cache                5.99 GiB / 112,096 tok  6.24 GiB / 116,784 tok
-process memory after
-first large request     8,226 MiB               8,482 MiB
-```
+| | cold boot | warm boot |
+|---|---:|---:|
+| `torch.compile` | 25.40 s | 0.19 s (AOT load) |
+| KV cache | 5.99 GiB / 112,096 tok | 6.24 GiB / 116,784 tok |
+| process memory after first large request | 8,226 MiB | 8,482 MiB |
 
 Still there. More interesting is the size of the gap. Qwen3-0.6B has 28 layers, 8 KV heads and a head dimension of 128, so with an fp8 KV cache each token takes:
 
@@ -77,13 +74,12 @@ The cold boot is 4,688 tokens short, which is **256 MiB**. On v0.19.1 the gap wa
 
 At the end of startup, v0.32.0 prints a full breakdown of the budget. Side by side:
 
-```
-                          cold       warm
-weights + non-torch       0.84 GiB   0.84 GiB
-peak activation           0.92 GiB   0.67 GiB
-CUDA graph                0.03 GiB   0.03 GiB
-KV cache                  5.99 GiB   6.24 GiB
-```
+| | cold | warm |
+|---|---:|---:|
+| weights + non-torch | 0.84 GiB | 0.84 GiB |
+| peak activation | 0.92 GiB | 0.67 GiB |
+| CUDA graph | 0.03 GiB | 0.03 GiB |
+| KV cache | 5.99 GiB | 6.24 GiB |
 
 Everything matches except the activation peak measured during profiling, and that 0.25 GiB comes straight out of the KV cache. The search space shrank from "the whole startup" to "that one peak".
 
@@ -180,13 +176,12 @@ def _standalone_context(gm, dynamic_shapes, aot, fake_mode=None):
 
 So far this was inference from reading code. To establish cause, change it directly: flip only that `True` to `False` (with `diff` confirming it is the only change in the file) and do a cold boot in a fresh container.
 
-```
-condition                       peak act.   recorder peak   296 MiB alloc
-cold (stock)                    0.92 GiB    306.3 MiB       yes
-warm (stock)                    0.67 GiB     52.0 MiB       no
-cold, env var set to 0          0.92 GiB    306.3 MiB       yes (overridden)
-cold, that line set to False    0.70 GiB     82.0 MiB       no
-```
+| condition | peak act. | recorder peak | 296 MiB alloc |
+|---|---:|---:|---|
+| cold (stock) | 0.92 GiB | 306.3 MiB | yes |
+| warm (stock) | 0.67 GiB | 52.0 MiB | no |
+| cold, env var set to 0 | 0.92 GiB | 306.3 MiB | yes (overridden) |
+| cold, that line set to `False` | 0.70 GiB | 82.0 MiB | no |
 
 The last row differs from the first by one line of code, and the cold boot now looks almost like a warm one. The remaining ~30 MiB is other, smaller compile-time scratch.
 
@@ -228,13 +223,12 @@ Two reports and two fixes, none of them linking to each other, and neither PR re
 
 Using the same bind-mount approach, I applied each PR to v0.32.0 and ran two cold boots each, with the recorder attached:
 
-```
-v0.32.0, cold boot   KV tokens (2 runs)     vs warm   296 MiB in window
-unpatched            112,096                -4,688    yes, counted
-#54479               116,784 / 116,784          0     absent (moved out)
-#54209               116,672 / 116,672       -112     present, not counted
-warm boot            116,784                    -     absent
-```
+| v0.32.0, cold boot | KV tokens (2 runs) | vs warm | 296 MiB in window |
+|---|---:|---:|---|
+| unpatched | 112,096 | −4,688 | yes, counted |
+| [#54479](https://github.com/vllm-project/vllm/pull/54479) | 116,784 / 116,784 | 0 | absent (moved out) |
+| [#54209](https://github.com/vllm-project/vllm/pull/54209) | 116,672 / 116,672 | −112 | present, not counted |
+| warm boot | 116,784 | – | absent |
 
 Both close nearly all of the gap, and the recorder shows how they differ: one **moves** the allocation out of the window, the other **leaves it in the window but stops counting it**. The #54209 author measured exact parity on an H100; my 112-token residual (about 6 MiB) is reproducible, but it may come from applying the patch to v0.32.0 rather than to the PR's base.
 
@@ -252,11 +246,10 @@ Raising `--gpu-memory-utilization` for cold boots does not work. It is a startup
 
 One number still did not add up. The recorder's high-water mark and vLLM's reported peak activation differ by the same constant on both cold and warm boots:
 
-```
-         recorder peak   vLLM peak activation      difference
-cold     306 MiB         0.92 GiB (about 942 MiB)  about 635 MiB
-warm      52 MiB         0.67 GiB (about 686 MiB)  about 635 MiB
-```
+| | recorder peak | vLLM peak activation | difference |
+|---|---:|---:|---:|
+| cold | 306 MiB | 0.92 GiB (about 942 MiB) | about 635 MiB |
+| warm | 52 MiB | 0.67 GiB (about 686 MiB) | about 635 MiB |
 
 Because the offset is identical on both sides, it does not affect anything above, and I said "unexplained" in the upstream comment rather than invent a reason. But a stable 635 MiB does not come from nowhere.
 
