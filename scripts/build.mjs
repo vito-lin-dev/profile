@@ -36,11 +36,67 @@ function inline(text) {
     .replace(/ -- /g, " &mdash; ");
 }
 
+/* ---------- tables (GFM pipe syntax) ---------- */
+
+/** The second row of a table: `| :--- | :---: | ---: |`. It must contain a pipe. */
+const TABLE_DELIMITER = /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$/;
+
+function isTable(lines) {
+  return lines.length >= 2 && lines.every((l) => l.includes("|")) && TABLE_DELIMITER.test(lines[1].trim());
+}
+
+/** `| a | b \| c |` → ["a", "b | c"]. A literal pipe inside a cell is written \|. */
+function splitRow(line) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/(?<!\\)\|$/, "")
+    .split(/(?<!\\)\|/)
+    .map((cell) => cell.trim().replace(/\\\|/g, "|"));
+}
+
+function alignmentOf(delimiter) {
+  const left = delimiter.startsWith(":");
+  const right = delimiter.endsWith(":");
+  if (left && right) return "center";
+  if (right) return "right";
+  if (left) return "left";
+  return "";
+}
+
+/**
+ * Header row, delimiter row, body rows. Alignment comes only from the
+ * delimiter row: write ---: for a numeric column, and the stylesheet
+ * right-aligns it with tabular figures. The table sits in a scroll
+ * container so a wide one never widens the page.
+ */
+function table(lines) {
+  const header = splitRow(lines[0]);
+  const aligns = splitRow(lines[1]).map(alignmentOf);
+  // GFM rule: every body row has exactly as many cells as the header.
+  const rows = lines.slice(2).map((line) => {
+    const cells = splitRow(line);
+    return header.map((_, i) => cells[i] ?? "");
+  });
+
+  const classes = aligns.map((align) => (align === "center" || align === "right" ? `align-${align}` : ""));
+
+  const cell = (tag, text, i) => {
+    const cls = classes[i] ? ` class="${classes[i]}"` : "";
+    return `<${tag}${cls}>${inline(escapeHtml(text))}</${tag}>`;
+  };
+  const head = `<tr>${header.map((text, i) => cell("th", text, i)).join("")}</tr>`;
+  const body = rows.map((row) => `<tr>${row.map((text, i) => cell("td", text, i)).join("")}</tr>`).join("\n");
+
+  return `<div class="table-wrap" tabindex="0"><table>\n<thead>${head}</thead>\n<tbody>\n${body}\n</tbody>\n</table></div>`;
+}
+
 /**
  * A deliberately small Markdown subset: headings (##, ###), paragraphs,
  * bullet and numbered lists, blockquotes, fenced code, rules, images,
- * bold, italic, inline code and links. Raw HTML blocks pass through.
- * Lists do not nest — that limit keeps this readable and predictable.
+ * GFM pipe tables, bold, italic, inline code and links. Raw HTML blocks
+ * pass through. Lists do not nest — that limit keeps this readable and
+ * predictable.
  */
 function markdown(src) {
   const fences = [];
@@ -75,6 +131,8 @@ function markdown(src) {
       }
 
       const lines = block.split("\n");
+
+      if (isTable(lines)) return table(lines);
 
       if (lines.every((l) => /^\s*[-*]\s+/.test(l))) {
         const items = lines.map((l) => `<li>${inline(escapeHtml(l.replace(/^\s*[-*]\s+/, "")))}</li>`);
