@@ -207,6 +207,8 @@ hr.divider {
   line-height: 1.55;
 }
 .prose pre code { background: none; border: 0; padding: 0; font-size: .85rem; }
+/* Long identifiers in running text may break anywhere rather than push the page sideways on a phone. */
+.prose p code, .prose li code { overflow-wrap: anywhere; }
 
 /* ---------- tables ----------
    The wrapper scrolls sideways, so a wide table never widens the page. */
