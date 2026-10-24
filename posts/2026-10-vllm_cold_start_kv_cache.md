@@ -3,7 +3,6 @@ title: "Why a cold vLLM boot gets 256 MiB less KV cache"
 date: 2026-10-24
 summary: "Same flags, two boots, two KV cache sizes. Tracing the missing 256 MiB to a 296 MiB example input that PyTorch's standalone_compile allocates inside vLLM's memory-profiling window, and comparing the two upstream fixes on the same machine."
 linkedin:
-draft: true
 ---
 
 Boot vLLM twice with exactly the same flags, and the first boot gets 0.25 GiB less KV cache than the second. This post follows that 0.25 GiB down to a single line of PyTorch configuration: the guesses that were wrong, the measurement that found it, and the one-line experiment that proved it.
