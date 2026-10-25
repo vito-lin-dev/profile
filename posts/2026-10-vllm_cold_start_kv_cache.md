@@ -181,7 +181,7 @@ The recorder's high-water mark and vLLM's reported peak activation differ by the
 | cold | 306 MiB | 0.92 GiB (about 942 MiB) | about 635 MiB |
 | warm | 52 MiB | 0.67 GiB (about 686 MiB) | about 635 MiB |
 
-Because the offset is identical, it does not change anything above, and I called it unexplained upstream rather than invent a reason. The answer is in another line of the startup log, the one claiming the CUDA graph memory estimate is 2150% too high. That is the next post.
+Because the offset is identical, it does not change anything above, and I called it unexplained upstream rather than invent a reason. The answer is in another line of the startup log, the one claiming the CUDA graph memory estimate is 2150% too high. That is [the next post](../2026-10-vllm_cudagraph_estimate_log/).
 
 ## Takeaways
 
